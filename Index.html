@@ -1,0 +1,281 @@
+import React, { useState, useEffect } from 'react'; import { Camera, Plus, Calendar, ShoppingCart, ChefHat, Trash2, Check, X, BookmarkPlus, Sparkles, Download } from 'lucide-react'; const MealPlannerApp = () => { const [recipes, setRecipes] = useState([]); const [weekPlan, setWeekPlan] = useState({}); const [groceryList, setGroceryList] = useState([]); const [currentView, setCurrentView] = useState('plan'); const [showRecipeModal, setShowRecipeModal] = useState(false); const [showRecommendations, setShowRecommendations] = useState(false); const [selectedDay, setSelectedDay] = useState(null); const [loading, setLoading] = useState(true); const [editingRecipe, setEditingRecipe] = useState(null); const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']; const recommendedRecipes = [ // Mains { id: 'rec1', name: 'Vegetarian Buddha Bowl', type: 'vegetarian', category: 'main', prepTime: '25 min', ingredients: ['quinoa', 'chickpeas', 'sweet potato', 'kale', 'tahini', 'lemon', 'avocado'], servings: 5 }, { id: 'rec2', name: 'Grilled Chicken Tacos', type: 'meat', category: 'main', prepTime: '30 min', ingredients: ['chicken breast', 'tortillas', 'bell peppers', 'onion', 'lime', 'cilantro', 'cheese', 'sour cream'], servings: 5 }, { id: 'rec3', name: 'Veggie Stir-Fry with Tofu', type: 'vegetarian', category: 'main', prepTime: '20 min', ingredients: ['broccoli', 'carrots', 'snap peas', 'tofu', 'soy sauce', 'ginger', 'garlic'], servings: 5 }, { id: 'rec4', name: 'Spaghetti Bolognese', type: 'meat', category: 'main', prepTime: '45 min', ingredients: ['ground beef', 'spaghetti', 'tomato sauce', 'onion', 'garlic', 'basil', 'parmesan'], servings: 5 }, { id: 'rec5', name: 'Lentil Curry', type: 'vegetarian', category: 'main', prepTime: '35 min', ingredients: ['red lentils', 'coconut milk', 'curry powder', 'tomatoes', 'spinach', 'onion', 'garlic'], servings: 5 }, { id: 'rec6', name: 'BBQ Pulled Pork Sandwiches', type: 'meat', category: 'main', prepTime: '4 hours', ingredients: ['pork shoulder', 'BBQ sauce', 'buns', 'coleslaw mix', 'apple cider vinegar'], servings: 5 }, { id: 'rec7', name: 'Teriyaki Salmon', type: 'meat', category: 'main', prepTime: '25 min', ingredients: ['salmon fillets', 'teriyaki sauce', 'sesame seeds'], servings: 5 }, { id: 'rec8', name: 'Eggplant Parmesan', type: 'vegetarian', category: 'main', prepTime: '40 min', ingredients: ['eggplant', 'marinara sauce', 'mozzarella', 'parmesan', 'breadcrumbs', 'basil'], servings: 5 }, // Vegetable Sides { id: 'veg1', name: 'Garlic Roasted Vegetables', type: 'vegetarian', category: 'side-vegetable', prepTime: '30 min', ingredients: ['zucchini', 'bell peppers', 'red onion', 'garlic', 'olive oil', 'herbs'], servings: 5 }, { id: 'veg2', name: 'Garden Salad', type: 'vegetarian', category: 'side-vegetable', prepTime: '10 min', ingredients: ['mixed greens', 'tomatoes', 'cucumber', 'carrots', 'dressing'], servings: 5 }, { id: 'veg3', name: 'Green Beans Almondine', type: 'vegetarian', category: 'side-vegetable', prepTime: '15 min', ingredients: ['green beans', 'butter', 'almonds', 'lemon', 'garlic'], servings: 5 }, { id: 'veg4', name: 'Steamed Broccoli', type: 'vegetarian', category: 'side-vegetable', prepTime: '10 min', ingredients: ['broccoli', 'butter', 'lemon', 'salt', 'pepper'], servings: 5 }, { id: 'veg5', name: 'Roasted Brussels Sprouts', type: 'vegetarian', category: 'side-vegetable', prepTime: '25 min', ingredients: ['brussels sprouts', 'olive oil', 'balsamic vinegar', 'garlic', 'parmesan'], servings: 5 }, { id: 'veg6', name: 'Glazed Carrots', type: 'vegetarian', category: 'side-vegetable', prepTime: '20 min', ingredients: ['carrots', 'butter', 'honey', 'thyme'], servings: 5 }, // Protein Sides { id: 'protein1', name: 'Grilled Chicken Breast', type: 'meat', category: 'side-protein', prepTime: '20 min', ingredients: ['chicken breast', 'olive oil', 'garlic', 'herbs', 'lemon'], servings: 5 }, { id: 'protein2', name: 'Pan-Seared Tofu', type: 'vegetarian', category: 'side-protein', prepTime: '15 min', ingredients: ['firm tofu', 'soy sauce', 'sesame oil', 'garlic', 'ginger'], servings: 5 }, { id: 'protein3', name: 'Baked Cod', type: 'meat', category: 'side-protein', prepTime: '20 min', ingredients: ['cod fillets', 'lemon', 'butter', 'herbs', 'breadcrumbs'], servings: 5 }, { id: 'protein4', name: 'Black Bean Patties', type: 'vegetarian', category: 'side-protein', prepTime: '25 min', ingredients: ['black beans', 'breadcrumbs', 'onion', 'spices', 'egg'], servings: 5 }, { id: 'protein5', name: 'Turkey Meatballs', type: 'meat', category: 'side-protein', prepTime: '30 min', ingredients: ['ground turkey', 'breadcrumbs', 'egg', 'parmesan', 'herbs'], servings: 5 }, // Starch Sides { id: 'starch1', name: 'Creamy Mashed Potatoes', type: 'vegetarian', category: 'side-starch', prepTime: '25 min', ingredients: ['potatoes', 'butter', 'milk', 'garlic', 'chives', 'salt', 'pepper'], servings: 5 }, { id: 'starch2', name: 'Steamed White Rice', type: 'vegetarian', category: 'side-starch', prepTime: '20 min', ingredients: ['white rice', 'water', 'salt'], servings: 5 }, { id: 'starch3', name: 'Garlic Bread', type: 'vegetarian', category: 'side-starch', prepTime: '15 min', ingredients: ['baguette', 'butter', 'garlic', 'parsley', 'parmesan'], servings: 5 }, { id: 'starch4', name: 'Pasta Salad', type: 'vegetarian', category: 'side-starch', prepTime: '15 min', ingredients: ['pasta', 'mozzarella', 'tomatoes', 'basil', 'olive oil', 'balsamic vinegar'], servings: 5 }, { id: 'starch5', name: 'Baked Sweet Potato', type: 'vegetarian', category: 'side-starch', prepTime: '45 min', ingredients: ['sweet potatoes', 'butter', 'cinnamon', 'salt'], servings: 5 }, { id: 'starch6', name: 'Quinoa Pilaf', type: 'vegetarian', category: 'side-starch', prepTime: '25 min', ingredients: ['quinoa', 'vegetable broth', 'onion', 'garlic', 'herbs'], servings: 5 }, { id: 'starch7', name: 'Mac and Cheese', type: 'vegetarian', category: 'side-starch', prepTime: '30 min', ingredients: ['pasta', 'cheddar cheese', 'milk', 'butter', 'flour'], servings: 5 } ]; const [newRecipe, setNewRecipe] = useState({ name: '', type: 'vegetarian', category: 'main', prepTime: '', ingredients: '', servings: 5 }); // Load data on mount useEffect(() => { loadData(); }, []); const loadData = async () => { console.log('=== LOADING DATA ==='); setLoading(true); if (!window.storage) { console.log('âš ï¸ Storage not available, starting fresh'); setLoading(false); return; } try { console.log('Attempting to load recipes...'); const recipesData = await window.storage.get('family-recipes', false).catch(err => { console.log('No recipes found (expected on first load):', err.message); return null; }); console.log('Attempting to load plan...'); const planData = await window.storage.get('week-plan', false).catch(err => { console.log('No plan found (expected on first load):', err.message); return null; }); if (recipesData?.value) { const parsed = JSON.parse(recipesData.value); console.log('âœ“ Loaded recipes from storage:', parsed.length, 'recipes'); console.log('Recipes:', parsed); setRecipes(parsed); } else { console.log('No saved recipes found'); } if (planData?.value) { const parsed = JSON.parse(planData.value); console.log('âœ“ Loaded plan from storage'); setWeekPlan(parsed); generateGroceryList(parsed); } else { console.log('No saved plan found'); } } catch (error) { console.error('âœ— Error loading data:', error); } finally { setLoading(false); console.log('=== LOAD COMPLETE ==='); } }; const saveRecipes = async (updatedRecipes) => { console.log('=== SAVING RECIPES ==='); console.log('Number of recipes:', updatedRecipes.length); console.log('Recipes:', updatedRecipes); // Update UI immediately for better UX setRecipes(updatedRecipes); if (!window.storage) { console.warn('âš ï¸ Storage API not available - changes will not persist'); alert('Note: Your recipes are saved for this session only. They will not persist after closing the app.'); return; } try { const dataToSave = JSON.stringify(updatedRecipes); console.log('Data to save (length):', dataToSave.length); // Use shared: false to make data persist across sessions const result = await window.storage.set('family-recipes', dataToSave, false); console.log('âœ“ Save successful, result:', result); // Verify the save worked const verification = await window.storage.get('family-recipes', false); if (verification?.value) { const saved = JSON.parse(verification.value); console.log('âœ“ Verified - recipes in storage:', saved.length); } else { console.error('âœ— Verification failed - no data found after save'); } } catch (error) { console.error('âœ— Error saving recipes:', error); // Don't show alert since UI is already updated } }; const saveWeekPlan = async (updatedPlan) => { // Update UI immediately for better UX setWeekPlan(updatedPlan); generateGroceryList(updatedPlan); if (!window.storage) { console.warn('Storage API not available - changes will not persist'); return; } try { console.log('Saving week plan:', updatedPlan); const result = await window.storage.set('week-plan', JSON.stringify(updatedPlan), false); console.log('Save result:', result); if (!result) { console.warn('Storage set returned null'); } } catch (error) { console.error('Error saving week plan:', error); // Don't show alert since UI is already updated } }; const addRecipe = async () => { if (!newRecipe.name || !newRecipe.ingredients) { alert('Please fill in recipe name and ingredients'); return; } if (editingRecipe) { // Update existing recipe const updatedRecipes = recipes.map(r => r.id === editingRecipe.id ? { ...r, name: newRecipe.name, type: newRecipe.type, category: newRecipe.category, prepTime: newRecipe.prepTime || '30 min', ingredients: newRecipe.ingredients.split(',').map(i => i.trim()).filter(i => i), servings: parseInt(newRecipe.servings) || 5 } : r ); await saveRecipes(updatedRecipes); // Update week plan if this recipe is scheduled const updatedPlan = { ...weekPlan }; let planChanged = false; Object.keys(updatedPlan).forEach(day => { const dayMeal = updatedPlan[day]; ['main', 'sideVegetable', 'sideProtein', 'sideStarch'].forEach(slot => { if (dayMeal[slot]?.id === editingRecipe.id) { dayMeal[slot] = updatedRecipes.find(r => r.id === editingRecipe.id); planChanged = true; } }); }); if (planChanged) { await saveWeekPlan(updatedPlan); } } else { // Add new recipe const recipe = { id: `custom-${Date.now()}`, name: newRecipe.name, type: newRecipe.type, category: newRecipe.category, prepTime: newRecipe.prepTime || '30 min', ingredients: newRecipe.ingredients.split(',').map(i => i.trim()).filter(i => i), servings: parseInt(newRecipe.servings) || 5, custom: true }; const updatedRecipes = [...recipes, recipe]; await saveRecipes(updatedRecipes); } setNewRecipe({ name: '', type: 'vegetarian', category: 'main', prepTime: '', ingredients: '', servings: 5 }); setEditingRecipe(null); setShowRecipeModal(false); }; const startEditRecipe = (recipe) => { setEditingRecipe(recipe); setNewRecipe({ name: recipe.name, type: recipe.type, category: recipe.category, prepTime: recipe.prepTime, ingredients: recipe.ingredients.join(', '), servings: recipe.servings }); setShowRecipeModal(true); }; const addRecommendedRecipe = async (recipe) => { if (!recipes.find(r => r.id === recipe.id)) { await saveRecipes([...recipes, recipe]); } setShowRecommendations(false); }; const deleteRecipe = async (recipeId) => { const recipeToDelete = recipes.find(r => r.id === recipeId); if (!recipeToDelete) return; if (!confirm(`Are you sure you want to delete "${recipeToDelete.name}"? This cannot be undone.`)) { return; } const updatedRecipes = recipes.filter(r => r.id !== recipeId); await saveRecipes(updatedRecipes); // Also remove from week plan if it's scheduled const updatedPlan = { ...weekPlan }; let planChanged = false; Object.keys(updatedPlan).forEach(day => { const dayMeal = updatedPlan[day]; ['main', 'sideVegetable', 'sideProtein', 'sideStarch'].forEach(slot => { if (dayMeal[slot]?.id === recipeId) { dayMeal[slot] = null; planChanged = true; } }); // Clean up empty days if (!dayMeal.main && !dayMeal.sideVegetable && !dayMeal.sideProtein && !dayMeal.sideStarch) { delete updatedPlan[day]; } }); if (planChanged) { await saveWeekPlan(updatedPlan); } }; const assignRecipe = async (day, recipe, recipeType = 'main') => { const updated = { ...weekPlan }; if (!updated[day]) { updated[day] = { main: null, sideVegetable: null, sideProtein: null, sideStarch: null }; } if (recipeType === 'main') { updated[day].main = recipe; } else if (recipeType === 'side-vegetable') { updated[day].sideVegetable = recipe; } else if (recipeType === 'side-protein') { updated[day].sideProtein = recipe; } else if (recipeType === 'side-starch') { updated[day].sideStarch = recipe; } await saveWeekPlan(updated); setSelectedDay(null); }; const removeFromPlan = async (day, recipeType = null) => { const updated = { ...weekPlan }; if (recipeType) { // Remove just one specific item if (updated[day]) { if (recipeType === 'main') { updated[day].main = null; } else if (recipeType === 'side-vegetable') { updated[day].sideVegetable = null; } else if (recipeType === 'side-protein') { updated[day].sideProtein = null; } else if (recipeType === 'side-starch') { updated[day].sideStarch = null; } // If all are null, remove the day entirely if (!updated[day].main && !updated[day].sideVegetable && !updated[day].sideProtein && !updated[day].sideStarch) { delete updated[day]; } } } else { // Remove the entire day delete updated[day]; } await saveWeekPlan(updated); }; const generateGroceryList = (plan) => { const ingredientMap = {}; Object.values(plan).forEach(dayMeal => { if (dayMeal) { // Handle new structure with main and three types of sides if (dayMeal.main || dayMeal.sideVegetable || dayMeal.sideProtein || dayMeal.sideStarch) { [dayMeal.main, dayMeal.sideVegetable, dayMeal.sideProtein, dayMeal.sideStarch].forEach(recipe => { if (recipe && recipe.ingredients) { recipe.ingredients.forEach(ingredient => { const key = ingredient.toLowerCase(); ingredientMap[key] = (ingredientMap[key] || 0) + 1; }); } }); } else if (dayMeal.ingredients) { // Handle old structure for backwards compatibility dayMeal.ingredients.forEach(ingredient => { const key = ingredient.toLowerCase(); ingredientMap[key] = (ingredientMap[key] || 0) + 1; }); } } }); const list = Object.entries(ingredientMap).map(([ingredient, count]) => ({ name: ingredient, count, checked: false })); setGroceryList(list); }; const toggleGroceryItem = (index) => { const updated = [...groceryList]; updated[index].checked = !updated[index].checked; setGroceryList(updated); }; const exportToReminders = async () => { const uncheckedItems = groceryList.filter(item => !item.checked); if (uncheckedItems.length === 0) { alert('All items are checked off! Nothing to export.'); return; } // Create a formatted text list const listText = uncheckedItems.map(item => `â€¢ ${item.name}${item.count > 1 ? ` (Ã—${item.count})` : ''}` ).join('\n'); try { // Copy to clipboard await navigator.clipboard.writeText(listText); // Show success message alert(`âœ“ Copied ${uncheckedItems.length} items to clipboard!\n\nYou can now:\nâ€¢ Paste into Reminders app manually\nâ€¢ Ask me: "Create reminders for these grocery items" and paste the list`); } catch (error) { console.error('Error copying to clipboard:', error); // Fallback: show the list that can be manually copied const fallbackMessage = `Copy these ${uncheckedItems.length} items:\n\n${listText}\n\nThen paste into your Reminders app or ask me to create them for you.`; alert(fallbackMessage); } }; // Helper to get grocery list as structured data window.getGroceryList = () => { return groceryList.filter(item => !item.checked).map(item => ({ name: item.name, count: item.count })); }; if (loading) { return (
+Loading your meal planner...
+); } return (
+{/* Header */}
+
+Family Meal Planner
+Planning delicious meals for 5
+setCurrentView('plan')} className={`tab-button px-6 py-3 rounded-lg font-semibold transition-all ${ currentView === 'plan' ? 'active bg-orange-500 text-white shadow-lg' : 'bg-white text-gray-700 hover:bg-orange-50' }`} > Week Plan setCurrentView('recipes')} className={`tab-button px-6 py-3 rounded-lg font-semibold transition-all ${ currentView === 'recipes' ? 'active bg-orange-500 text-white shadow-lg' : 'bg-white text-gray-700 hover:bg-orange-50' }`} > Recipes setCurrentView('grocery')} className={`tab-button px-6 py-3 rounded-lg font-semibold transition-all ${ currentView === 'grocery' ? 'active bg-orange-500 text-white shadow-lg' : 'bg-white text-gray-700 hover:bg-orange-50' }`} > Grocery List
+{/* Week Plan View */} {currentView === 'plan' && (
+This Week's Menu
+ðŸŒ± = Vegetarian | ðŸ– = Contains Meat
+{days.map((day, index) => { const dayMeal = weekPlan[day] || { main: null, sideVegetable: null, sideProtein: null, sideStarch: null }; const hasMain = dayMeal.main; const hasVeggie = dayMeal.sideVegetable; const hasProtein = dayMeal.sideProtein; const hasStarch = dayMeal.sideStarch; const hasAnything = hasMain || hasVeggie || hasProtein || hasStarch; return (
+{day}
+{hasAnything && ( removeFromPlan(day)} className="text-red-500 hover:text-red-700 transition-colors" title="Clear entire day" > )}
+{/* Main Course */}
+MAIN COURSE
+{hasMain ? (
+removeFromPlan(day, 'main')} className="absolute top-2 right-2 text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity" title="Remove main" >
+{dayMeal.main.name}
+{dayMeal.main.type === 'vegetarian' ? 'ðŸŒ±' : 'ðŸ–'}
+â±ï¸ {dayMeal.main.prepTime}
+) : ( setSelectedDay({ day, type: 'main' })} className="w-full py-3 border-2 border-dashed border-orange-300 rounded-lg text-orange-600 hover:bg-orange-50 hover:border-orange-400 transition-all text-sm font-semibold" > Add Main )}
+{/* Vegetable Side */}
+VEGETABLE
+{hasVeggie ? (
+removeFromPlan(day, 'side-vegetable')} className="absolute top-2 right-2 text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity" title="Remove vegetable" >
+{dayMeal.sideVegetable.name}
+ðŸ¥¦
+â±ï¸ {dayMeal.sideVegetable.prepTime}
+) : ( setSelectedDay({ day, type: 'side-vegetable' })} className="w-full py-3 border-2 border-dashed border-green-300 rounded-lg text-green-600 hover:bg-green-50 hover:border-green-400 transition-all text-sm font-semibold" > Add Veggie )}
+{/* Protein Side */}
+PROTEIN
+{hasProtein ? (
+removeFromPlan(day, 'side-protein')} className="absolute top-2 right-2 text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity" title="Remove protein" >
+{dayMeal.sideProtein.name}
+{dayMeal.sideProtein.type === 'vegetarian' ? 'ðŸŒ±' : 'ðŸ—'}
+â±ï¸ {dayMeal.sideProtein.prepTime}
+) : ( setSelectedDay({ day, type: 'side-protein' })} className="w-full py-3 border-2 border-dashed border-pink-300 rounded-lg text-pink-600 hover:bg-pink-50 hover:border-pink-400 transition-all text-sm font-semibold" > Add Protein )}
+{/* Starch Side */}
+STARCH
+{hasStarch ? (
+removeFromPlan(day, 'side-starch')} className="absolute top-2 right-2 text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity" title="Remove starch" >
+{dayMeal.sideStarch.name}
+ðŸš
+â±ï¸ {dayMeal.sideStarch.prepTime}
+) : ( setSelectedDay({ day, type: 'side-starch' })} className="w-full py-3 border-2 border-dashed border-yellow-300 rounded-lg text-yellow-600 hover:bg-yellow-50 hover:border-yellow-400 transition-all text-sm font-semibold" > Add Starch )}
+); })}
+)} {/* Recipes View */} {currentView === 'recipes' && (
+Family Recipes
+setShowRecommendations(true)} className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all hover:scale-105" > Discover Recipes setShowRecipeModal(true)} className="px-6 py-3 bg-orange-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all hover:scale-105" > Add Recipe
+{recipes.length === 0 ? (
+No recipes saved yet!
+Add your favorite family recipes or discover new ones.
+) : (
+{recipes.map((recipe, index) => (
+{recipe.name}
+{recipe.type === 'vegetarian' ? 'ðŸŒ±' : 'ðŸ–'} startEditRecipe(recipe)} className="text-blue-500 hover:text-blue-700 transition-colors p-1" title="Edit recipe" > deleteRecipe(recipe.id)} className="text-red-500 hover:text-red-700 transition-colors p-1" title="Delete recipe" >
+{recipe.category === 'main' ? 'ðŸ½ï¸ MAIN' : recipe.category === 'side-vegetable' ? 'ðŸ¥¦ VEGETABLE' : recipe.category === 'side-protein' ? 'ðŸ— PROTEIN' : 'ðŸš STARCH'}
+â±ï¸ {recipe.prepTime}
+ðŸ‘¨â€ðŸ‘©â€ðŸ‘§â€ðŸ‘¦ Serves {recipe.servings}
+Ingredients:
+{recipe.ingredients.slice(0, 5).map((ing, i) => ( {ing} ))} {recipe.ingredients.length > 5 && ( +{recipe.ingredients.length - 5} more )}
+))}
+)}
+)} {/* Grocery List View */} {currentView === 'grocery' && (
+Shopping List
+{groceryList.length > 0 && ( Export to Reminders )}
+{groceryList.length === 0 ? (
+No grocery list yet!
+Plan your week's meals to generate a shopping list.
+) : (
+{groceryList.filter(i => !i.checked).length} items to buy Â· {groceryList.filter(i => i.checked).length} checked off
+{groceryList.map((item, index) => (
+toggleGroceryItem(index)} className="mr-4" /> {item.name} {item.count > 1 && ( x{item.count} )}
+))}
+)}
+)}
+{/* Day Meal Selection Modal */} {selectedDay && (
+Choose for {selectedDay.day}
+{selectedDay.type === 'main' ? 'ðŸ½ï¸ Main Course' : selectedDay.type === 'side-vegetable' ? 'ðŸ¥¦ Vegetable Side' : selectedDay.type === 'side-protein' ? 'ðŸ— Protein Side' : 'ðŸš Starch Side'}
+setSelectedDay(null)} className="text-gray-500 hover:text-gray-700 transition-colors" >
+{recipes.filter(r => r.category === selectedDay.type).length === 0 ? (
+No {selectedDay.type === 'main' ? 'main courses' : selectedDay.type === 'side-vegetable' ? 'vegetable sides' : selectedDay.type === 'side-protein' ? 'protein sides' : 'starch sides'} available yet!
+{ setSelectedDay(null); setCurrentView('recipes'); setShowRecommendations(true); }} className="px-6 py-3 bg-orange-500 text-white rounded-xl font-semibold hover:bg-orange-600 transition-colors" > Discover Recipes
+) : ( recipes .filter(recipe => recipe.category === selectedDay.type) .map(recipe => ( assignRecipe(selectedDay.day, recipe, selectedDay.type)} className="w-full text-left p-4 rounded-xl border-2 border-orange-200 hover:border-orange-400 hover:bg-orange-50 transition-all" >
+{recipe.name}
+â±ï¸ {recipe.prepTime} Â· ðŸ‘¨â€ðŸ‘©â€ðŸ‘§â€ðŸ‘¦ Serves {recipe.servings}
+{recipe.type === 'vegetarian' ? 'ðŸŒ±' : 'ðŸ–'}
+)) )}
+)} {/* Add Recipe Modal */} {showRecipeModal && (
+{editingRecipe ? 'Edit Recipe' : 'Add New Recipe'}
+{ setShowRecipeModal(false); setEditingRecipe(null); setNewRecipe({ name: '', type: 'vegetarian', category: 'main', prepTime: '', ingredients: '', servings: 5 }); }} className="text-white/80 hover:text-white transition-colors" >
+Recipe Name {newRecipe.name} setNewRecipe({...newRecipe, name: e.target.value})} className="w-full px-4 py-3 rounded-xl border-2 border-gray-300 focus:border-orange-500 focus:outline-none transition-colors" placeholder="e.g., Mom's Famous Pasta" />
+Category
+setNewRecipe({...newRecipe, category: 'main'})} className={`px-4 py-3 rounded-xl font-semibold transition-all ${ newRecipe.category === 'main' ? 'bg-orange-500 text-white shadow-lg' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }`} > ðŸ½ï¸ Main setNewRecipe({...newRecipe, category: 'side-vegetable'})} className={`px-4 py-3 rounded-xl font-semibold transition-all ${ newRecipe.category === 'side-vegetable' ? 'bg-green-500 text-white shadow-lg' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }`} > ðŸ¥¦ Vegetable setNewRecipe({...newRecipe, category: 'side-protein'})} className={`px-4 py-3 rounded-xl font-semibold transition-all ${ newRecipe.category === 'side-protein' ? 'bg-pink-500 text-white shadow-lg' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }`} > ðŸ— Protein setNewRecipe({...newRecipe, category: 'side-starch'})} className={`px-4 py-3 rounded-xl font-semibold transition-all ${ newRecipe.category === 'side-starch' ? 'bg-yellow-500 text-white shadow-lg' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }`} > ðŸš Starch
+Type
+setNewRecipe({...newRecipe, type: 'vegetarian'})} className={`flex-1 px-4 py-3 rounded-xl font-semibold transition-all ${ newRecipe.type === 'vegetarian' ? 'bg-green-500 text-white shadow-lg' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }`} > ðŸŒ± Vegetarian setNewRecipe({...newRecipe, type: 'meat'})} className={`flex-1 px-4 py-3 rounded-xl font-semibold transition-all ${ newRecipe.type === 'meat' ? 'bg-orange-500 text-white shadow-lg' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }`} > ðŸ– Contains Meat
+Prep Time {newRecipe.prepTime} setNewRecipe({...newRecipe, prepTime: e.target.value})} className="w-full px-4 py-3 rounded-xl border-2 border-gray-300 focus:border-orange-500 focus:outline-none transition-colors" placeholder="e.g., 30 min" />
+Servings setNewRecipe({...newRecipe, servings: e.target.value})} className="w-full px-4 py-3 rounded-xl border-2 border-gray-300 focus:border-orange-500 focus:outline-none transition-colors" placeholder="5" />
+Ingredients (comma-separated)  setNewRecipe({...newRecipe, ingredients: e.target.value})}
+                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-300 focus:border-orange-500 focus:outline-none transition-colors"
+                  rows="4"
+                  placeholder="pasta, tomatoes, basil, garlic, olive oil"
+                />
+              </div>
+
+              <button
+                onClick={addRecipe}
+                className="w-full py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all hover:scale-105"
+              >
+                {editingRecipe ? 'Update Recipe' : 'Save Recipe'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Recommendations Modal */}
+      {showRecommendations && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowRecommendations(false)}>
+          <div className="bg-white rounded-3xl max-w-4xl w-full shadow-2xl" style={{maxHeight: '85vh', display: 'flex', flexDirection: 'column'}} onClick={(e) => e.stopPropagation()}>
+            {/* Fixed Header */}
+            <div className="bg-gradient-to-r from-purple-500 to-pink-500 p-6 rounded-t-3xl">
+              <div className="flex justify-between items-center">
+                <h3 className="handwritten text-3xl text-white">Recommended Recipes</h3>
+                <button
+                  onClick={() => setShowRecommendations(false)}
+                  className="text-white/80 hover:text-white transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              <p className="text-white/90 mt-2">Curated recipes perfect for your family</p>
+            </div>
+
+            {/* Scrollable Content */}
+            <div className="p-6" style={{overflowY: 'auto', flex: '1 1 auto'}}>
+              {/* Main Courses */}
+              <div className="mb-6">
+                <h4 className="font-bold text-lg text-gray-800 mb-3">ðŸ½ï¸ Main Courses</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {recommendedRecipes.filter(r => r.category === 'main').map(recipe => {
+                    const alreadySaved = recipes.find(r => r.id === recipe.id);
+                    return (
+                      <div
+                        key={recipe.id}
+                        className="recipe-card bg-white rounded-2xl p-6 shadow-lg border-2 border-purple-200"
+                      >
+                        <div className="flex justify-between items-start mb-3">
+                          <h5 className="font-bold text-base text-gray-800 flex-1">{recipe.name}</h5>
+                          <span className="text-xl ml-2">
+                            {recipe.type === 'vegetarian' ? 'ðŸŒ±' : 'ðŸ–'}
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-600 mb-2">â±ï¸ {recipe.prepTime}</p>
+                        <button
+                          onClick={() => addRecommendedRecipe(recipe)}
+                          disabled={alreadySaved}
+                          className={`w-full py-2 rounded-lg font-semibold transition-all text-sm ${
+                            alreadySaved
+                              ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                              : 'bg-purple-500 text-white hover:bg-purple-600'
+                          }`}
+                        >
+                          {alreadySaved ? <><Check className="w-3 h-3 inline mr-1" />Saved</> : <><Plus className="w-3 h-3 inline mr-1" />Save</>}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Vegetable Sides */}
+              <div className="mb-6">
+                <h4 className="font-bold text-lg text-gray-800 mb-3">ðŸ¥¦ Vegetable Sides</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {recommendedRecipes.filter(r => r.category === 'side-vegetable').map(recipe => {
+                    const alreadySaved = recipes.find(r => r.id === recipe.id);
+                    return (
+                      <div
+                        key={recipe.id}
+                        className="recipe-card bg-white rounded-2xl p-6 shadow-lg border-2 border-green-200"
+                      >
+                        <div className="flex justify-between items-start mb-3">
+                          <h5 className="font-bold text-base text-gray-800 flex-1">{recipe.name}</h5>
+                          <span className="text-xl ml-2">ðŸ¥¦</span>
+                        </div>
+                        <p className="text-xs text-gray-600 mb-2">â±ï¸ {recipe.prepTime}</p>
+                        <button
+                          onClick={() => addRecommendedRecipe(recipe)}
+                          disabled={alreadySaved}
+                          className={`w-full py-2 rounded-lg font-semibold transition-all text-sm ${
+                            alreadySaved
+                              ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                              : 'bg-green-500 text-white hover:bg-green-600'
+                          }`}
+                        >
+                          {alreadySaved ? <><Check className="w-3 h-3 inline mr-1" />Saved</> : <><Plus className="w-3 h-3 inline mr-1" />Save</>}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Protein Sides */}
+              <div className="mb-6">
+                <h4 className="font-bold text-lg text-gray-800 mb-3">ðŸ— Protein Sides</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {recommendedRecipes.filter(r => r.category === 'side-protein').map(recipe => {
+                    const alreadySaved = recipes.find(r => r.id === recipe.id);
+                    return (
+                      <div
+                        key={recipe.id}
+                        className="recipe-card bg-white rounded-2xl p-6 shadow-lg border-2 border-pink-200"
+                      >
+                        <div className="flex justify-between items-start mb-3">
+                          <h5 className="font-bold text-base text-gray-800 flex-1">{recipe.name}</h5>
+                          <span className="text-xl ml-2">
+                            {recipe.type === 'vegetarian' ? 'ðŸŒ±' : 'ðŸ—'}
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-600 mb-2">â±ï¸ {recipe.prepTime}</p>
+                        <button
+                          onClick={() => addRecommendedRecipe(recipe)}
+                          disabled={alreadySaved}
+                          className={`w-full py-2 rounded-lg font-semibold transition-all text-sm ${
+                            alreadySaved
+                              ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                              : 'bg-pink-500 text-white hover:bg-pink-600'
+                          }`}
+                        >
+                          {alreadySaved ? <><Check className="w-3 h-3 inline mr-1" />Saved</> : <><Plus className="w-3 h-3 inline mr-1" />Save</>}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Starch Sides */}
+              <div>
+                <h4 className="font-bold text-lg text-gray-800 mb-3">ðŸš Starch Sides</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {recommendedRecipes.filter(r => r.category === 'side-starch').map(recipe => {
+                    const alreadySaved = recipes.find(r => r.id === recipe.id);
+                    return (
+                      <div
+                        key={recipe.id}
+                        className="recipe-card bg-white rounded-2xl p-6 shadow-lg border-2 border-yellow-200"
+                      >
+                        <div className="flex justify-between items-start mb-3">
+                          <h5 className="font-bold text-base text-gray-800 flex-1">{recipe.name}</h5>
+                          <span className="text-xl ml-2">ðŸš</span>
+                        </div>
+                        <p className="text-xs text-gray-600 mb-2">â±ï¸ {recipe.prepTime}</p>
+                        <button
+                          onClick={() => addRecommendedRecipe(recipe)}
+                          disabled={alreadySaved}
+                          className={`w-full py-2 rounded-lg font-semibold transition-all text-sm ${
+                            alreadySaved
+                              ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                              : 'bg-yellow-500 text-white hover:bg-yellow-600'
+                          }`}
+                        >
+                          {alreadySaved ? <><Check className="w-3 h-3 inline mr-1" />Saved</> : <><Plus className="w-3 h-3 inline mr-1" />Save</>}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default MealPlannerApp;
